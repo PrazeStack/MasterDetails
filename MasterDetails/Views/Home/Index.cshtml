@@ -1,0 +1,317 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <h2 class="panel-title pull-left">
+                <span>
+                    Orders
+                </span>
+            </h2>
+            <button class="btn btn-primary pull-right" id="addNewItem" data-toggle="modal" data-target="#newOrderModal  " style="margin-right: 5px;">Add New</button>
+        </div>
+    </div>
+    <div class="panel-body">
+        <table class="table table-striped table-bordered" id="ordersTable">
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Address</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+
+
+<div class="modal fade" id="newOrderModal" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+
+
+                <h4 class="modal-title">
+                    New Order Information
+                </h4>
+            </div>
+            <div class="modal-body">
+                <h3>
+                    Order Master
+                </h3>
+                <hr>
+                <div class="form-horizontal">
+                    <input id="orderMasterId" type="hidden">
+
+
+                    <div class="form-group">
+                        <label class="control-label col-md-2">
+                            Customer Name
+                        </label>
+
+
+                        <div class="col-md-4">
+                            <input class="form-control" id="customerName" placeholder="Customer Name" type="text">
+                        </div>
+                        <label class="control-label col-md-2">
+                            Address
+                        </label>
+
+
+                        <div class="col-md-4">
+                            <input class="form-control" id="address" placeholder="Customer Address" type="text">
+                        </div>
+                    </div>
+                </div>
+                <h3 style="margin-top: 10px;">
+                    Order Details
+                </h3>
+                <table class="table" id="detailsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Product</th>
+                            <th style="width: 20%;">Unit Price</th>
+                            <th style="width: 15%;">Quantity</th>
+                            <th style="width: 20%;">Amount</th>
+                            <th style="width: 10%;"></th>
+                            <th style="width: 10%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                <a class="btn btn-info" data-target="#orderDetailsModal" data-toggle="modal" id="addMore">Add Detail</a>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" data-dismiss="modal" type="button">Close</button>
+                <button class="btn btn-primary" id="saveOrder" type="button">Save Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="orderDetailsModal" role="dialog" tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+
+
+                <h4 class="modal-title">
+                    Order Details
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal">
+                    <div class="form-group">
+                        <input id="detailId" type="hidden">
+                        <label class="control-label col-md-3">
+                            Product Name
+                        </label>
+
+
+                        <div class="col-md-9">
+                            <input class="form-control" id="productName" placeholder="Product Name" type="text">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3">
+                            Price
+                        </label>
+
+
+                        <div class="col-md-4">
+                            <input class="form-control" id="price" placeholder="Product Price" type="text">
+                        </div>
+                        <label class="control-label col-md-2">
+                            Quanity
+                        </label>
+
+
+                        <div class="col-md-3">
+                            <input class="form-control" id="quantity" type="text">
+                         
+
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3 col-lg-offset-9">
+                            <a class="btn btn-default" id="addToList">Add To List</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts{
+
+    <script>
+        $(function () {
+            var orderUrl = '@Url.Action("getOrders","Home")';
+            var table = $("#ordersTable").DataTable({
+                "processing": true,
+                "serverside": true,
+                "filterng": false,
+                "orderMulti": false,
+                "ajax": {
+                    "url": orderUrl,
+                    "type": "POST",
+                    "datatype": "json"
+                    
+
+                },
+                "columns": [
+                    { "data": "customerName", "name": "customerName", "autowidth": true },
+                    { "data": "address", "name": "address", "autowidth": true },
+                    { "data": "orderDate", "name": "orderDate", "autowidth": true },
+                    { "data": null, "name": "Action", "defaultContent": '<a class="editOrder" href="#">Edit Order</a>', "autoWidth": true }
+
+                ]
+            });
+
+        }),
+
+
+
+            $("#addNewItem").click(function () {
+                clearItem();
+               
+                $("#detailsTable tbody tr").remove();
+                $("#saveOrder").html("Save Order");
+
+                function clearItem() {
+                    $("#productName").val('');
+                    $("#price").val('');
+                    $("#quantity").val('');
+                    $("#customerName").val('');
+                    $("#address").val('');
+                    $("#orderMasterId").val('');
+                }
+
+            }),
+
+            $("#addToList").click(function () {
+                
+
+                if ($.trim($("#productName").val()) == "" || $.trim($("#price").val()) == "" || $.trim($("#quantity").val()) == "") return;
+                var productName = $("#productName").val(),
+                    price = $("#price").val(),
+                    quantity =  $("#quantity").val(),
+                    detailsTableBody = $("#detailsTable tbody");
+
+                var productItem = '<tr><td>' + productName + '</td><td>' + price + '</td><td>' + quantity + '</td><td>' + (parseFloat(price) * parseInt(quantity)) + '</td> <td><a data-itemId="0" data-productName="' + productName + '" data-price="' + price + '" data-quantity="' + quantity + '" href="#" data-target="#orderDetailsModal" data-toggle="modal" class="editItem">Edit</a></td>'+ '<td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>' ;
+                detailsTableBody.append(productItem);
+                clearItem();
+
+                function clearItem() {
+                    $("#productName").val('');
+                    $("#price").val('');
+                    $("#quantity").val('');
+                }
+
+            }),
+
+
+            $(document).on('click', 'a.deleteItem', function (e) {
+                e.preventDefault();
+                var $self = $(this);
+                if ($(this).attr('data-itemId') == "0") {
+                    $(this).parents('tr').remove();
+                }
+            }),
+
+            $(document).on('click', 'a.editItem', function (e) {
+                e.preventDefault();
+
+               
+
+                    var data = $(this).data();
+                    $(this).parents('tr').remove();
+
+
+                 $("#productName").val(data.productname),
+                   $("#price").val(data.price);
+                   $("#quantity").val(data.quantity);
+
+         
+                   
+
+            }),
+            $(document).on("click", '.editOrder', function (e) {
+                var table = $(this).parents('table').DataTable();
+                var data = table.row($(this).parents('tr')).data();
+                e.preventDefault();
+                var id = data.masterId;
+                
+            })
+
+
+        $("#saveOrder").click(function (e) {
+            e.preventDefault();
+            var orderArr = [];
+            orderArr.length = 0;
+            $.each($("#detailsTable tbody tr"), function () {
+                orderArr.push({
+                    ProductName: $(this).find('td:eq(0)').html(),
+                    Quantity: $(this).find('td:eq(2)').html(),
+                    Amount: $(this).find('td:eq(1)').html()
+                });
+            });
+
+            var data = JSON.stringify({
+                CustomerName: $("#customerName").val(),
+                Address: $("#address").val(),
+                OrderDetails: orderArr
+            });
+
+            $.when(saveOrder(data)).then(function (response) {
+                var homeUrl = '@Url.Action("Index","Home")';
+                window.location.href = homeUrl;
+                console.log(response);
+            }).fail(function (err) {
+                console.log(err);
+            });
+            function saveOrder(data) {
+
+                var saveUrl = '@Url.Action("saveOrder", "Home", new { area=""})';
+                return $.ajax({
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    type: 'POST',
+                    url: saveUrl,
+                    data: data
+                });
+
+
+            }
+
+        });
+
+
+
+
+    </script>
+
+
+
+
+
+}
