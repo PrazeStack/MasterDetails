@@ -1,5 +1,7 @@
 ﻿@{
+
     ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <div class="panel panel-default">
     <div class="panel-heading">
@@ -47,8 +49,7 @@
                 <hr>
                 <div class="form-horizontal">
                     <input id="orderMasterId" type="hidden">
-
-
+                    
                     <div class="form-group">
                         <label class="control-label col-md-2">
                             Customer Name
@@ -91,7 +92,7 @@
                             <td></td>
                             <td></td>
                             <td>
-                                <a class="btn btn-info" data-target="#orderDetailsModal" data-toggle="modal" id="addMore">Add Detail</a>
+                                <a class="btn btn-info" @*data-target="#orderDetailsModal" data-toggle="modal"*@ id="addMore">Add Detail</a>
                             </td>
                         </tr>
                     </tfoot>
@@ -145,7 +146,7 @@
 
                         <div class="col-md-3">
                             <input class="form-control" id="quantity" type="text">
-                         
+
 
                         </div>
                     </div>
@@ -174,15 +175,20 @@
                 "ajax": {
                     "url": orderUrl,
                     "type": "POST",
-                    "datatype": "json"
-                    
+                    "datatype": "json",
+
 
                 },
                 "columns": [
                     { "data": "customerName", "name": "customerName", "autowidth": true },
                     { "data": "address", "name": "address", "autowidth": true },
                     { "data": "orderDate", "name": "orderDate", "autowidth": true },
-                    { "data": null, "name": "Action", "defaultContent": '<a class="editOrder" href="#">Edit Order</a>', "autoWidth": true }
+                    {
+                        "data": "Edit", "name": "Edit", "autoWidth": true,
+                        "render": function (data, type, row, meta) {
+                            return '<a href="#" data-masterid=' + row.masterId + ' class="editOrder">Edit Order</a>'
+                        }
+                    }
 
                 ]
             });
@@ -192,24 +198,19 @@
 
 
             $("#addNewItem").click(function () {
-                clearItem();
-               
+                
+
                 $("#detailsTable tbody tr").remove();
                 $("#saveOrder").html("Save Order");
+                clearItem();
 
-                function clearItem() {
-                    $("#productName").val('');
-                    $("#price").val('');
-                    $("#quantity").val('');
-                    $("#customerName").val('');
-                    $("#address").val('');
-                    $("#orderMasterId").val('');
-                }
+               
 
             }),
 
+
             $("#addToList").click(function () {
-                
+
 
                 if ($.trim($("#productName").val()) == "" || $.trim($("#price").val()) == "" || $.trim($("#quantity").val()) == "") return;
                 var productName = $("#productName").val(),
@@ -219,9 +220,9 @@
 
                 var productItem = '<tr><td>' + productName + '</td><td>' + price + '</td><td>' + quantity + '</td><td>' + (parseFloat(price) * parseInt(quantity)) + '</td> <td><a data-itemId="0" data-productName="' + productName + '" data-price="' + price + '" data-quantity="' + quantity + '" href="#" data-target="#orderDetailsModal" data-toggle="modal" class="editItem">Edit</a></td>'+ '<td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>' ;
                 detailsTableBody.append(productItem);
-                clearItem();
+                clearOrderDetails();
 
-                function clearItem() {
+                function clearOrderDetails() {
                     $("#productName").val('');
                     $("#price").val('');
                     $("#quantity").val('');
@@ -241,7 +242,7 @@
             $(document).on('click', 'a.editItem', function (e) {
                 e.preventDefault();
 
-               
+
 
                     var data = $(this).data();
                     $(this).parents('tr').remove();
@@ -251,20 +252,80 @@
                    $("#price").val(data.price);
                    $("#quantity").val(data.quantity);
 
-         
-                   
+
+
 
             }),
+
             $(document).on("click", '.editOrder', function (e) {
-                var table = $(this).parents('table').DataTable();
-                var data = table.row($(this).parents('tr')).data();
+
+                var data = $(this).data();
                 e.preventDefault();
-                var id = data.masterId;
-                
+                var id = data.masterid;
+                $.when(getOrder(id)).then(function (res) {
+                    var detArr = [];
+                    $("#customerName").val(res.CustomerName);
+                    $("#address").val(res.Address);
+                    $("#orderMasterId").val(res.MasterId);
+
+                    $.each(res.OrderDetails, function (i, v) {
+                        detArr.push('<tr><td>' + v.ProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td><a data-itemId="' + v.DetailsId + '" href="#" class="deleteItem">Delete</a> </td><td> <a href="#" data-itemId="' + v.DetailsId + '" class="editDetail">Edit</a></td></tr>')
+                    });
+                    $("#detailsTable tbody").append(detArr);
+                    $("#saveOrder").html("Save Update");
+                    $('#newOrderModal').modal('show');
+
+                }).fail(function (err) {
+                    console.log(err);
+                });
             })
+            $(document).on("click", '.editDetail', function (e) {
+            var id = $(this).attr("data-itemid");
+            e.preventDefault;
+            
+            $.when(getSingleOrderDetail(id)).then(function (res) {
+                data = res;
+                $("#detailId").val(data.DetailId);
+                $("#productName").val(data.ProductName);
+                $("#price").val(data.Amount);
+                $("#quantity").val(data.Quantity);
 
 
-        $("#saveOrder").click(function (e) {
+            }).fail(function (err) {
+                console.log(err);
+            });
+        });
+            function getOrder(id) {
+                return $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("getSingleOrder", "Home", new { area = "" })', //question
+                    data: "orderId=" + id
+                });
+           }
+            function getSingleOrder(id) {
+                return $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("getSingleOrderDetail", "Home", new { area = "" })', //question
+                    data: "orderId=" + id
+                });
+        }
+            function clearItem() {
+            $("#productName").val('');
+            $("#price").val('');
+            $("#quantity").val('');
+            $("#customerName").val('');
+            $("#address").val('');
+            $("#orderMasterId").val('');
+        }
+            function getSingleOrderDetail(id) {
+                return $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("getSingleOrderDetail", "Home", new { area = "" })', //question
+                    data: "orderId=" + id
+                });
+            }
+
+               $("#saveOrder").click(function (e) {
             e.preventDefault();
             var orderArr = [];
             orderArr.length = 0;

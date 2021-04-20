@@ -14,7 +14,7 @@ namespace MasterDetails.Controllers
         {
             db = new MasterDataEntities();
         }
-        [HttpPost]
+       
         public ActionResult saveOrder(OrderViewModel order)
         {
             var masterId = Guid.NewGuid();
@@ -63,7 +63,51 @@ namespace MasterDetails.Controllers
 
         }
 
-     
+        public ActionResult getSingleOrder(Guid orderId)
+        {
+            var order = db.OrderMasters.FirstOrDefault(x => x.MasterId == orderId);
+            var model = new OrderViewModel()
+            {
+                MasterId = order.MasterId,
+                CustomerName = order.CustomerName,
+                Address = order.Address
+            };
+
+            if (model != null)
+            {
+
+                model.OrderDetails = db.OrderDetails.Where(x => x.MasterId == model.MasterId).Select(x => new OrderDetailViewModel()
+                {
+                    DetailsId = x.DetailsId,
+                    ProductName = x.ProductName,
+                    Quantity = x.Quantity,
+                    Amount = x.Amount
+                }).ToList();
+                
+               
+            }
+                
+            return Json((model), JsonRequestBehavior.AllowGet);
+
+        }
+        public ActionResult getSingleOrderDetail(Guid orderId)
+        {
+            var orderDetails = db.OrderDetails.FirstOrDefault(x => x.DetailsId == orderId);
+            var model = new OrderDetailViewModel()
+            {
+                 DetailsId = orderDetails.DetailsId,
+                 Amount = orderDetails.Amount,
+                 ProductName = orderDetails.ProductName,
+                 Quantity = orderDetails.Quantity
+                
+            };
+
+            return Json((model), JsonRequestBehavior.AllowGet);
+
+        }
+
+
+
         public ActionResult getOrders()
         {
             //var draw = Request.Form.GetValues("draw").FirstOrDefault();
@@ -72,7 +116,7 @@ namespace MasterDetails.Controllers
                 masterId = x.MasterId,
                 customerName = x.CustomerName,
                 address = x.Address,
-                orderDate = x.OrderDate.ToString("D")
+                orderDate = x.OrderDate.ToString("D")//
             })).ToList();
 
             return Json(new
