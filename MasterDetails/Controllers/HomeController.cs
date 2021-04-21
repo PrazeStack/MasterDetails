@@ -17,49 +17,71 @@ namespace MasterDetails.Controllers
        
         public ActionResult saveOrder(OrderViewModel order)
         {
-            var masterId = Guid.NewGuid();
-            var orderMaster = new OrderMaster()
+            if (order.MasterId == Guid.Empty)
             {
-                MasterId = masterId,
-                CustomerName = order.CustomerName,
-                Address = order.Address,
-                OrderDate = DateTime.Now
-            };
-            db.OrderMasters.Add(orderMaster);
-
-            if (order.OrderDetails.Any())
-            {
-
-
-                foreach (var item in order.OrderDetails)
+                var masterId = Guid.NewGuid();
+                var orderMaster = new OrderMaster()
                 {
-                    var detailsId = Guid.NewGuid();
-                    var orderDetails = new OrderDetail()
+                    MasterId = masterId,
+                    CustomerName = order.CustomerName,
+                    Address = order.Address,
+                    OrderDate = DateTime.Now
+                };
+                db.OrderMasters.Add(orderMaster);
+
+                if (order.OrderDetails.Any())
+                {
+
+
+                    foreach (var item in order.OrderDetails)
                     {
-                        DetailsId = detailsId,
-                        MasterId = masterId,
-                        ProductName = item.ProductName,
-                        Quantity = item.Quantity,
-                        Amount = item.Amount
+                        var detailsId = Guid.NewGuid();
+                        var orderDetails = new OrderDetail()
+                        {
+                            DetailsId = detailsId,
+                            MasterId = masterId,
+                            ProductName = item.ProductName,
+                            Quantity = item.Quantity,
+                            Amount = item.Amount
 
 
-                    };
-                    db.OrderDetails.Add(orderDetails);
-                }  
-            }
-
-            try
-            {
-                if (db.SaveChanges()>0)
-                {
-                    return Json(new { error = false, message = "Order Saved Successfully" });
+                        };
+                        db.OrderDetails.Add(orderDetails);
+                    }
                 }
+
+                try
+                {
+                    if (db.SaveChanges() > 0)
+                    {
+                        return Json(new { error = false, message = "Order Saved Successfully" });
+                    }
+                }
+                catch (Exception e)
+                {
+                    return Json(new { error = true, message = e.Message });
+                }
+                return Json(new { error = true, message = "An Unknown Error has Occured" });
             }
-            catch (Exception e)
+            else
             {
-                return Json(new { error = true, message = e.Message });
+                var orderMaster = db.OrderMasters.FirstOrDefault(x => x.MasterId == order.MasterId);
+                orderMaster.CustomerName = order.CustomerName;
+                orderMaster.Address = order.Address;
+                orderMaster.OrderDetails = db.OrderDetails.Where(x => x.MasterId == order.MasterId).ToList();
+                try
+                {
+                    if (db.SaveChanges() > 0)
+                    {
+                        return Json(new { error = false, message = "Order Updated Successfully" });
+                    }
+                }
+                catch (Exception e)
+                {
+                    return Json(new { error = true, message = e.Message });
+                }
+                return Json(new { error = true, message = "An Unknown Error has Occured" });
             }
-            return Json(new { error = true, message = "An Unknown Error has Occured" });
 
         }
 
@@ -103,6 +125,18 @@ namespace MasterDetails.Controllers
             };
 
             return Json((model), JsonRequestBehavior.AllowGet);
+
+        }
+        public ActionResult updateSingleOrderDetail(OrderDetailViewModel data)
+        {
+            var model = db.OrderDetails.FirstOrDefault(x => x.DetailsId == data.DetailsId);
+            model.Amount = data.Amount;
+            model.ProductName = data.ProductName;
+            model.Quantity = data.Quantity;
+
+            db.SaveChanges();
+            return Json(model);
+
 
         }
 
