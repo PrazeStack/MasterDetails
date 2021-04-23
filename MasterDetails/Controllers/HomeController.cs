@@ -14,7 +14,7 @@ namespace MasterDetails.Controllers
         {
             db = new MasterDataEntities();
         }
-       
+
         public ActionResult saveOrder(OrderViewModel order)
         {
             if (order.MasterId == Guid.Empty)
@@ -68,7 +68,27 @@ namespace MasterDetails.Controllers
                 var orderMaster = db.OrderMasters.FirstOrDefault(x => x.MasterId == order.MasterId);
                 orderMaster.CustomerName = order.CustomerName;
                 orderMaster.Address = order.Address;
-                orderMaster.OrderDetails = db.OrderDetails.Where(x => x.MasterId == order.MasterId).ToList();
+                if (order.OrderDetails.Any())
+                {
+                    
+                    foreach (var item in order.OrderDetails)
+                    {
+                        if (item.State.Contains("Remove"))
+                        {
+                            var orderDetail = new OrderDetail()
+                            {
+                                DetailsId = Guid.NewGuid(),
+                                MasterId = order.MasterId,
+                                ProductName = item.ProductName,
+                                Quantity = item.Quantity,
+                                Amount = item.Amount,
+
+                            };
+                            db.OrderDetails.Add(orderDetail);
+                        }
+                    }
+                }
+
                 try
                 {
                     if (db.SaveChanges() > 0)
@@ -141,6 +161,24 @@ namespace MasterDetails.Controllers
         }
 
 
+        public ActionResult deleteOrderdetail(Guid id)
+        {
+            var order = db.OrderDetails.FirstOrDefault(x => x.DetailsId == id);
+            db.OrderDetails.Remove(order);
+            try
+            {
+                if (db.SaveChanges() > 0)
+                {
+                    return Json(new { error = false, message = "Order Update Successfully" });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { error = true, message = e.Message });
+            }
+            return Json(new { error = true, message = "An Unknown Error has Occured" });
+
+        }
 
         public ActionResult getOrders()
         {

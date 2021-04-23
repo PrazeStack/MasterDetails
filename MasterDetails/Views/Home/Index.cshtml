@@ -11,7 +11,7 @@
                     Orders
                 </span>
             </h2>
-            <button class="btn btn-primary pull-right" id="addNewItem" data-toggle="modal" data-target="#newOrderModal  " style="margin-right: 5px;">Add New</button>
+            <button class="btn btn-primary pull-right" id="addNewItem" data-toggle="modal" data-target="#newOrderModal" style="margin-right: 5px;">Add New</button>
         </div>
     </div>
     <div class="panel-body">
@@ -47,29 +47,31 @@
                     Order Master
                 </h3>
                 <hr>
-                <div class="form-horizontal">
-                   
-                    
-                    <div class="form-group">
-                        <label class="control-label col-md-2">
-                            Customer Name
-                        </label>
+                <form id="customerForm">
+                    <div class="form-horizontal">
 
 
-                        <div class="col-md-4">
-                            <input class="form-control" id="customerName" placeholder="Customer Name" type="text">
+                        <div class="form-group">
+                            <label class="control-label col-md-2">
+                                Customer Name
+                            </label>
+
+
+                            <div class="col-md-4">
+                                <input class="form-control" id="customerName" placeholder="Customer Name"  name="customerName" required type="text">
+                            </div>
+                            <label class="control-label col-md-2">
+                                Address
+                            </label>
+
+
+                            <div class="col-md-4">
+                                <input class="form-control" id="customerAddress" placeholder="Customer Address" name="Address" required type="text">
+                            </div>
+                            <input id="orderMasterId" type="hidden">
                         </div>
-                        <label class="control-label col-md-2">
-                            Address
-                        </label>
-
-
-                        <div class="col-md-4">
-                            <input class="form-control" id="address" placeholder="Customer Address" type="text">
-                        </div>
-                        <input id="orderMasterId" type="hidden">
                     </div>
-                </div>
+                </form>
                 <h3 style="margin-top: 10px;">
                     Order Details
                 </h3>
@@ -138,7 +140,7 @@
 
 
                         <div class="col-md-4">
-                            <input class="form-control" id="price" placeholder="Product Price" type="text">
+                            <input class="form-control" id="price" placeholder="Product Price" type="number">
                         </div>
                         <label class="control-label col-md-2">
                             Quanity
@@ -146,7 +148,7 @@
 
 
                         <div class="col-md-3">
-                            <input class="form-control" id="quantity" type="text">
+                            <input class="form-control" id="quantity" type="number">
 
 
                         </div>
@@ -196,6 +198,7 @@
 
         }),
 
+            
 
 
             $("#addNewItem").click(function () {
@@ -222,51 +225,77 @@
 
             $("#addToList").click(function () {
 
-                if ($.trim($("#productName").val()) == "" || $.trim($("#price").val()) == "" || $.trim($("#quantity").val()) == "") return;
+                var Name = $("#productName").val();
+                var Price = $("#price").val();
+                var Quantity = $("#quantity").val();
+
+                if ($.trim(Name) == "") {
+                    $("#productName").after('<span class="error">Product name is required</span>');
+
+                } if (Name.length < 3) {
+                    $("#productName").after('<span class="error">Product name is too short</span>');
+
+                } if (Name.length > 10 ) {
+                    $("#productName").after('<span class="error">Product name is too long</span>');
+
+                } if (Price == "") {
+                    $("#price").after('<span class="error">Price is required</span>');
+                } if (Price == 0) {
+                    $("#price").after('<span class="error">Price is cannot be 0</span>');
+                }
+                if (Quantity == "")
+                {
+                    $("#quantity").after('<span class="error">Quantity is required</span>')
+                } if (Quantity == 0) {
+                    $("#quantity").after('<span class="error">Quantity must be greater than 0</span>')
+                } if (Quantity > 5000) {
+                    $("#quantity").after('<span class="error">Please reduce Quantity (5000 Maximum)</span>')
+                } else {
                     var productName = $("#productName").val(),
                         price = $("#price").val(),
                         quantity = $("#quantity").val(),
-                        detailsId = $("#detailId").val(),
+                        detailsId = $("#UrletailId").val(),
                         detailsTableBody = $("#detailsTable tbody");
 
-                if (detailsId == @Guid.Empty) {
+                    if (detailsId == @Guid.Empty) {
 
-                    var productItem = '<tr><td>' + productName + '</td><td>' + price + '</td><td>' + quantity + '</td><td>' + (parseFloat(price) * parseInt(quantity)) + '</td> <td><a data-itemId="0" data-productName="' + productName + '" data-price="' + price + '" data-quantity="' + quantity + '" href="#" data-target="#orderDetailsModal" data-toggle="modal" class="editItem">Edit</a></td>' + '<td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>';
-                    detailsTableBody.append(productItem);
-                    clearOrderDetails();
+                        var productItem = '<tr><td>' + productName + '</td><td>' + price + '</td><td>' + quantity + '</td><td>' + (parseFloat(price) * parseInt(quantity)) + '</td> <td><a data-itemId="0" data-productName="' + productName + '" data-price="' + price + '" data-quantity="' + quantity + '" href="#" data-target="#orderDetailsModal" data-toggle="modal" class="editItem">Edit</a></td>' + '<td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>';
+                        detailsTableBody.append(productItem);
+                        clearOrderDetails();
 
-                    function clearOrderDetails() {
-                        $("#productName").val(''),
-                        $("#price").val(''),
-                        $("#quantity").val('');
-                    }
+                        function clearOrderDetails() {
+                            $("#productName").val(''),
+                                $("#price").val(''),
+                                $("#quantity").val('');
+                        }
 
-                } else {
+                    } else {
 
-                    var data = JSON.stringify({
-                        DetailsId : $("#detailId").val(),
-                        ProductName : $("#productName").val(),
-                        Amount: $("#price").val(),
-                        Quantity: $("#quantity").val(),
-                       
-                    })
-                    $.when(updateSingleOrderDetail(data)).then(function (res) {
-                        var detArr = [];
+                        var data = JSON.stringify({
+                            DetailsId: $("#detailId").val(),
+                            ProductName: $("#productName").val(),
+                            Amount: $("#price").val(),
+                            Quantity: $("#quantity").val(),
 
-                        $.each(res, function (i, v) {
-                            detArr.push('<tr><td>' + v.ProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td> <a href="#" data-itemId="' + v.DetailsId + '" class="editDetail">Edit</a></td><td> <a data-itemId="' + v.DetailsId + '" href="#" class="deleteItem">Delete</a></td></tr>')
+                        })
+                        $.when(updateSingleOrderDetail(data)).then(function (res) {
+                            var detArr = [];
+
+                            $.each(res, function (i, v) {
+                                detArr.push('<tr><td>' + v.ProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td> <a href="#" data-itemId="' + v.DetailsId + '" class="editDetail">Edit</a></td><td> <a data-itemId="' + v.DetailsId + '" href="#" class="deleteItem">Delete</a></td></tr>')
+                            });
+                            $("#detailsTable tbody").remove();
+                            $("#detailsTable tbody").append(detArr);
+                            $("#saveOrder").html("Save Update");
+                            $('#newOrderModal').modal('show');
+
+                        }).fail(function (err) {
+                            console.log(err);
                         });
-                        $("#detailsTable tbody").remove();
-                        $("#detailsTable tbody").append(detArr);
-                        $("#saveOrder").html("Save Update");
-                        $('#newOrderModal').modal('show');
-
-                    }).fail(function (err) {
-                        console.log(err);
-                    });
 
 
 
+                    }
                 }
             }),
 
@@ -281,6 +310,10 @@
                 var $self = $(this);
                 if ($(this).attr('data-itemId') == "0") {
                     $(this).parents('tr').remove();
+                } else {
+                    var id = $(this).attr("data-itemid");
+                    deleteOrderdetail(id);
+
                 }
             }),
 
@@ -303,7 +336,7 @@
             }),
 
             $(document).on("click", '.editOrder', function (e) {
-               
+
                 var data = $(this).data();
                 e.preventDefault();
                 var id = data.masterid;
@@ -318,16 +351,18 @@
                         detArr.push('<tr><td>' + v.ProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td> <a href="#" data-itemId="' + v.DetailsId + '" class="editDetail">Edit</a></td><td> <a data-itemId="' + v.DetailsId + '" href="#" class="deleteItem">Delete</a></td></tr>')
                     });
                     $('#newOrderModal').modal('show');
-                  
+
                     $("#detailsTable tbody").empty();
                     $("#detailsTable tbody").append(detArr);
-                    $("#saveOrder").html("Save Update");    
-                   
+                    $("#saveOrder").html("Save Update");
+
 
                 }).fail(function (err) {
                     console.log(err);
                 });
             })
+
+
             $(document).on("click", '.editDetail', function (e) {
             var id = $(this).attr("data-itemid");
             e.preventDefault;
@@ -366,7 +401,7 @@
             $("#customerName").val('');
             $("#address").val('');
             $("#orderMasterId").val('');
-        } 
+        }
             function getSingleOrderDetail(id) {
                 return $.ajax({
                     type: 'GET',
@@ -377,7 +412,7 @@
                 }
             function updateSingleOrderDetail(data) {
                 return $.ajax({
-                   
+
                     url: '@Url.Action("updateSingleOrderDetail", "Home", new { area = "" })',
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
@@ -390,15 +425,46 @@
             }
         $("#saveOrder").click(function (e) {
             e.preventDefault();
+            $(".error").remove();
+            var Name = $('#customerName').val();
+            var Address = $('#customerAddress').val();
+            if (Name.length < 1) {
+                $('#customerName').after('<span class="error">Customer Name is required</span>');
+              
+            }else if (Name.length < 3) {
+                $('#customerName').after('<span class="error">Customer Name is too short</span>');
+
+            }
+            if (Name.length > 15) {
+
+                $('#customerName').after('<span class="error">Customer Name is too long</span>');
+            }
+            if (Address.length < 1) {
+                $('#customerAddress').after('<span class="error">Address is required</span>');
+               
+
+            } else if (Address.length < 7) {
+                $('#customerAddress').after('<span class="error">Address is too short</span>');
+
+            } if (Address.length > 30) {
+                $('#customerAddress').after('<span class="error">Address is too long</span>');
+
+            } else {
             var orderArr = [];
             orderArr.length = 0;
+
+
             $.each($("#detailsTable tbody tr"), function () {
+
                 orderArr.push({
                     ProductName: $(this).find('td:eq(0)').html(),
                     Quantity: $(this).find('td:eq(2)').html(),
-                    Amount: $(this).find('td:eq(1)').html()
+                    Amount: $(this).find('td:eq(1)').html(),
+                    State: $(this).find('td:eq(5)').html()
                 });
+
             });
+
 
             var data = JSON.stringify({
                 MasterId: $("#orderMasterId").val(),
@@ -416,9 +482,11 @@
             });
 
 
-        })
+            }
+        }),
 
-        
+
+
             function saveOrder(data) {
 
                 var saveUrl = '@Url.Action("saveOrder", "Home", new { area=""})';
@@ -431,9 +499,17 @@
                 });
 
 
-            }
+            },
 
-      
+
+        function deleteOrderdetail(id) {
+            var Url = '@Url.Action("deleteOrderdetail","Home")';
+            return $.ajax({
+                type: 'POST',
+                url: Url,
+                data: id
+            });
+        }
 
 
 
