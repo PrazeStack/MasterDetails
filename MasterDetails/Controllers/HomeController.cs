@@ -28,6 +28,7 @@ namespace MasterDetails.Controllers
                     OrderDate = DateTime.Now
                 };
                 db.OrderMasters.Add(orderMaster);
+                
 
                 if (order.OrderDetails.Any())
                 {
@@ -150,26 +151,16 @@ namespace MasterDetails.Controllers
         public ActionResult updateSingleOrderDetail(OrderDetailViewModel data)
         {
             var model = db.OrderDetails.FirstOrDefault(x => x.DetailsId == data.DetailsId);
-            model.Amount = data.Amount;
+            model.Amount =  data.Amount;
             model.ProductName = data.ProductName;
             model.Quantity = data.Quantity;
 
-            db.SaveChanges();
-            return Json(model);
 
-
-        }
-
-
-        public ActionResult deleteOrderdetail(Guid id)
-        {
-            var order = db.OrderDetails.FirstOrDefault(x => x.DetailsId == id);
-            db.OrderDetails.Remove(order);
             try
             {
                 if (db.SaveChanges() > 0)
                 {
-                    return Json(new { error = false, message = "Order Update Successfully" });
+                    return Json(new { error = false, message = "Order Updated Successfully" });
                 }
             }
             catch (Exception e)
@@ -179,6 +170,41 @@ namespace MasterDetails.Controllers
             return Json(new { error = true, message = "An Unknown Error has Occured" });
 
         }
+
+
+        public ActionResult deleteOrderdetail(Guid id)
+        {
+            var order = db.OrderDetails.FirstOrDefault(x => x.DetailsId == id);
+            db.OrderDetails.Remove(order);
+            db.SaveChanges();
+            try{
+                if (db.SaveChanges() > 0)
+                {
+                    return Json(new { error = false, message = "Order Deleted Successfully" });
+                }
+            }
+            catch (Exception e)
+            {
+                return Json(new { error = true, message = e.Message });
+            }
+            return Json(new { error = true, message = "An Unknown Error has Occured" });
+
+
+        }
+
+        public ActionResult deleteOrder(Guid id)
+        {
+            var orders = db.OrderDetails.Where(x => x.MasterId == id);
+            foreach (var order in orders)
+            {
+                db.OrderDetails.Remove(order);
+            }
+            var orderMaster = db.OrderMasters.FirstOrDefault(x => x.MasterId == id);
+            db.OrderMasters.Remove(orderMaster);
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
 
         public ActionResult getOrders()
         {
