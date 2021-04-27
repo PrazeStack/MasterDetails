@@ -36,10 +36,10 @@ namespace MasterDetails.Controllers
 
                     foreach (var item in order.OrderDetails)
                     {
-                        var detailsId = Guid.NewGuid();
+                        //var detailsId = Guid.NewGuid();
                         var orderDetails = new OrderDetail()
                         {
-                            DetailsId = detailsId,
+                            DetailsId = item.DetailsId,
                             MasterId = masterId,
                             ProductName = item.ProductName,
                             Quantity = item.Quantity,
@@ -74,11 +74,11 @@ namespace MasterDetails.Controllers
                     
                     foreach (var item in order.OrderDetails)
                     {
-                        if (item.State.Contains("Remove"))
+                        if (item.State == "New")
                         {
                             var orderDetail = new OrderDetail()
                             {
-                                DetailsId = Guid.NewGuid(),
+                                DetailsId = item.DetailsId,
                                 MasterId = order.MasterId,
                                 ProductName = item.ProductName,
                                 Quantity = item.Quantity,
@@ -121,6 +121,7 @@ namespace MasterDetails.Controllers
 
                 model.OrderDetails = db.OrderDetails.Where(x => x.MasterId == model.MasterId).Select(x => new OrderDetailViewModel()
                 {
+                    MasterId = orderId,
                     DetailsId = x.DetailsId,
                     ProductName = x.ProductName,
                     Quantity = x.Quantity,
@@ -136,6 +137,7 @@ namespace MasterDetails.Controllers
         public ActionResult getSingleOrderDetail(Guid orderId)
         {
             var orderDetails = db.OrderDetails.FirstOrDefault(x => x.DetailsId == orderId);
+           
             var model = new OrderDetailViewModel()
             {
                  DetailsId = orderDetails.DetailsId,
@@ -175,20 +177,27 @@ namespace MasterDetails.Controllers
         public ActionResult deleteOrderdetail(Guid id)
         {
             var order = db.OrderDetails.FirstOrDefault(x => x.DetailsId == id);
-            db.OrderDetails.Remove(order);
-            db.SaveChanges();
-            try{
-                if (db.SaveChanges() > 0)
-                {
-                    return Json(new { error = false, message = "Order Deleted Successfully" });
-                }
-            }
-            catch (Exception e)
+            if (order != null)
             {
-                return Json(new { error = true, message = e.Message });
+                db.OrderDetails.Remove(order);
+                db.SaveChanges();
+                try
+                {
+                    if (db.SaveChanges() > 0)
+                    {
+                        return Json(new { error = false, message = "Order Deleted Successfully" });
+                    }
+                }
+                catch (Exception e)
+                {
+                    return Json(new { error = true, message = e.Message });
+                }
+                return Json(new { error = true, message = "An Unknown Error has Occured" });
             }
-            return Json(new { error = true, message = "An Unknown Error has Occured" });
-
+            else
+            {
+                return Json(new { error = false, message = "Order Deleted Successfully" });
+            }
 
         }
 

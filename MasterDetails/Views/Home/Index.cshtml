@@ -57,7 +57,7 @@
                                 Customer Name
                             </label>
 
-
+                           
                             <div class="col-md-4">
                                 <input class="form-control" id="customerName" placeholder="Customer Name"  name="customerName" required type="text">
                             </div>
@@ -124,7 +124,8 @@
             <div class="modal-body">
                 <div class="form-horizontal">
                     <div class="form-group">
-                        <input id="detailId" type="hidden">
+                        <input id="detailId" type="hidden" />
+                        <input id="index" type="hidden" />
                         <label class="control-label col-md-3">
                             Product Name
                         </label>
@@ -220,8 +221,11 @@
 
             }),
             $("#addMore").click(function () {
-
-                $("#detailId").val('');
+                $("#index").val('');
+                $("#productName").val('');
+                $("#price").val('');
+                $("#quantity").val('');
+                $("#detailId").val(@Guid.Empty);
                 $("#orderDetailsModal").modal('show');
 
 
@@ -237,7 +241,7 @@
                 var Price = $("#price").val();
                 var Quantity = $("#quantity").val();
                 function valid() {
-                    
+
                      if($.trim(Name) == "") {
                         $("#productName").after('<span class="error">Product name is required</span>');
                         return false;
@@ -254,8 +258,8 @@
                     } if (Price == "") {
                         $("#price").after('<span class="error">Price is required</span>');
                         return false;
-                    } else if (Price == 0) {
-                        $("#price").after('<span class="error">Price is cannot be 0</span>');
+                    } else if (Price <= 0) {
+                        $("#price").after('<span class="error">Price is must be greater than 0</span>');
                         return false;
                     } else if (Price > 9999999) {
                         $("#price").after('<span class="error">Invalid price (9,999,999 MAX)</span>');
@@ -264,58 +268,78 @@
                     if (Quantity == "") {
                         $("#quantity").after('<span class="error">Quantity is required</span>');
                         return false;
-                    } else if (Quantity == 0) {
+                    } else if (Quantity  <= 0) {
                         $("#quantity").after('<span class="error">Quantity must be greater than 0</span>')
                         return false;
                     } else if (Quantity > 5000) {
                         $("#quantity").after('<span class="error">Please reduce Quantity (5000 Maximum)</span>')
                         return false;
                     }
+
                     else {
+
                         return true;
+
+
                     }
-                
-                    
-                }     
-                
+
+
+                }
+
 
 
                 if(valid()) {
 
 
-                        var productName = $("#productName").val(),
-                         price = $("#price").val(),
+                    var productName = $("#productName").val(),
+                        price = $("#price").val(),
                         quantity = $("#quantity").val(),
                         detailsId = $("#detailId").val(),
-                        detailsTableBody = $("#detailsTable tbody");
+                        index = $("#index").val();
+                       
 
+                    if (detailsId == @Guid.Empty) {
+                        var data = {
+                            "ProductName": productName,
+                            "Amount": price,
+                            "Quantity": quantity,
+                            "index": itemList.length,
+                            "State": "New",
+                            "DetailsId": "@Guid.NewGuid()" 
+                        };
 
-                            if (detailsId == @Guid.Empty) {
+                        itemList.push(data);
 
-                                var productItem = '<tr><td>' + productName + '</td><td>' + price + '</td><td>' + quantity + '</td><td>' + (parseFloat(price) * parseInt(quantity)) + '</td> <td><a data-itemId="0" data-productName="' + productName + '" data-price="' + price + '" data-quantity="' + quantity + '" href="#" data-target="#orderDetailsModal" data-toggle="modal" class="editItem">Edit</a></td>' + '<td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>';
-                                detailsTableBody.append(productItem);
-
+                                //var productItem = '<tr><td>' + productName + '</td><td>' + price + '</td><td>' + quantity + '</td><td>' + (parseFloat(price) * parseInt(quantity)) + '</td> <td><a data-itemId="0" data-productName="' + productName + '" data-price="' + price + '" data-quantity="' + quantity + '" href="#" data-target="#orderDetailsModal" data-toggle="modal" data-itemId="" class="editItem">Edit</a></td>' + '<td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>';
+                                ////detailsTableBody.append(productItem);
+                                //itemList.push(productItem)
 
                                 clearOrderDetails();
 
                                 function clearOrderDetails() {
-                                    $("#productName").val(''),
-                                        $("#price").val(''),
-                                        $("#quantity").val('');
+                                    $("#productName").val('');
+                                    $("#price").val('');
+                                    $("#quantity").val('');
+                                  
+
                                 }
 
                         } else {
 
-                            var data = JSON.stringify({
-                                DetailsId: $("#detailId").val(),
-                                ProductName: $("#productName").val(),
-                                Amount: $("#price").val(),
-                                Quantity: $("#quantity").val(),
+                           
 
-                            })
-                                var masterId = $("#orderMasterId").val();
-                                updateSingleOrderDetail(data);
-                                $.when(getSingleOrder(masterId)).then(function (res) {
+                                itemList[index] = {
+
+                                    "ProductName": productName,
+                                    "Amount": price,
+                                    "Quantity": quantity,
+
+
+
+                                };
+                               // var masterId = $("#orderMasterId").val();
+                                //updateSingleOrderDetail(data);
+                                @*$.when(getSingleOrder(masterId)).then(function (res) {
                                     var detArr = [];
                                     $("#customerName").val(res.CustomerName);
                                     $("#customerAddress").val(res.Address);
@@ -323,7 +347,7 @@
 
 
                                     $.each(res.OrderDetails, function (i, v) {
-                                        detArr.push('<tr><td>' + v.ProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td> <a href="#" data-itemId="' + v.DetailsId + '" class="editDetail">Edit</a></td><td> <a data-itemId="' + v.DetailsId + '" href="@Url.Action("deleteOrderdetail","Home")/'+v.DetailsId+'" class="deleteItem">Delete</a></td></tr>')
+                                        detArr.push('<tr><td>' + appendProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td> <a href="#" data-itemId="' + v.DetailsId + '" class="editDetail">Edit</a></td><td> <a data-itemId="' + v.DetailsId + '" href="@Url.Action("deleteOrderdetail","Home")/'+v.DetailsId+'" class="deleteItem">Delete</a></td></tr>')
                                     });
                                     $('#newOrderModal').modal('show');
 
@@ -336,12 +360,15 @@
                                 console.log(err);
 
 
-                                 });
+                                 });*@
 
 
 
-                            }
-                       }
+                    }
+                    refreshItemlist();
+                    $("#orderDetailsModal").modal("hide");
+                    
+                  }
             }),
 
 
@@ -362,12 +389,14 @@
 
             $(document).on('click', 'a.deleteItem', function (e) {
                 e.preventDefault();
-                var $self = $(this);
-                if ($(this).attr('data-itemId') == "0") {
-                    $(this).parents('tr').remove();
-                } else {
+                var data = $(this).data()
+                var index = data.index;
+                
+                itemList.splice(index, 1);
                     var id = $(this).attr("data-itemid");
-                    deleteOrderdetail(id);
+                deleteOrderdetail(id);
+                refreshItemlist();
+                $("#newOrderModal").modal("handleUpdate");
                     function deleteOrderdetail(id) {
 
                             var Url = '@Url.Action("deleteOrderdetail","Home", new { area = "" })';
@@ -377,8 +406,10 @@
                                 data: "id=" + id
 
                             });
+                        
+                       
                     }
-                     var masterId = $("#orderMasterId").val();
+                    @*var masterId = $("#orderMasterId").val();
 
                                 $.when(getSingleOrder(masterId)).then(function (res) {
                                     var detArr = [];
@@ -403,23 +434,26 @@
                                 console.log(err);
 
 
-                                 });
-
-                }
+                                 });*@
+                
+              
+               
             }),
 
             $(document).on('click', 'a.editItem', function (e) {
-                e.preventDefault();
-
-
-
-                    var data = $(this).data();
-                    $(this).parents('tr').remove();
-
-
-                 $("#productName").val(data.productname),
-                   $("#price").val(data.price);
-                   $("#quantity").val(data.quantity);
+                var index = $(this).attr("data-index");
+                e.preventDefault;
+               
+               
+               
+                $.when(getFromItemList(index)).then(function (order) {
+                    $("#detailId").val(order.DetailsId);
+                    $("#index").val(order.index);
+                    $("#productName").val(order.ProductName);
+                    $("#price").val(order.Amount);
+                    $("#quantity").val(order.Quantity);
+                    $("#orderDetailsModal").modal('show');
+                })
 
 
 
@@ -427,24 +461,37 @@
             }),
 
             $(document).on("click", '.editOrder', function (e) {
-
+                $(".error").remove();
                 var data = $(this).data();
                 e.preventDefault();
                 var id = data.masterid;
+
                 $.when(getSingleOrder(id)).then(function (res) {
-                    var detArr = [];
+
                     $("#customerName").val(res.CustomerName);
                     $("#customerAddress").val(res.Address);
                     $("#orderMasterId").val(res.MasterId);
 
-
+                    itemList = [];
                     $.each(res.OrderDetails, function (i, v) {
-                        detArr.push('<tr><td>' + v.ProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td> <a href="#" data-itemId="' + v.DetailsId + '" class="editDetail">Edit</a></td><td> <a data-itemId="' + v.DetailsId + '" href="@Url.Action("deleteOrderdetail","Home")/'+v.DetailsId+'" class="deleteItem">Delete</a></td></tr>')
+                        var data = {
+                            "ProductName": v.ProductName,
+                            "Amount": v.Amount,
+                            "Quantity": v.Quantity,
+                            "index": i,
+                            "MasterId": v.MasterId,
+                            "State": "Saved",
+                            "DetailsId":v.DetailsId
+                        };
+                        
+                        itemList.push(data);
+                        @*itemList.push('<tr><td>' + v.ProductName + '</td><td>' + v.Amount + '</td><td>' + v.Quantity + '</td><td>' + (parseFloat(v.Amount) * parseInt(v.Quantity)) + '</td><td> <a href="#" data-index="' + i + '" class="editDetail">Edit</a></td><td> <a data-itemId="' + v.DetailsId + '" href="@Url.Action("deleteOrderdetail","Home")/'+v.DetailsId+'" class="deleteItem">Delete</a></td></tr>')*@
+                        
                     });
+                    refreshItemlist();
                     $('#newOrderModal').modal('show');
 
-                    $("#detailsTable tbody").empty();
-                    $("#detailsTable tbody").append(detArr);
+                   
                     $("#saveOrder").html("Save Update");
 
 
@@ -454,22 +501,30 @@
             })
 
 
-            $(document).on("click", '.editDetail', function (e) {
-            var id = $(this).attr("data-itemid");
+        $(document).on("click", '.editDetail', function (e) {
+            var index = $(this).attr("data-index");
             e.preventDefault;
+            $.when(getFromItemList(index)).then(function (order) {
+                $("#detailId").val(order.DetailsId);
+                $("#productName").val(order.ProductName);
+                $("#price").val(order.Amount);
+                $("#quantity").val(order.Quantity);
+                $("#index").val(order.index);
+               $("#orderDetailsModal").modal('show');
 
-            $.when(getSingleOrderDetail(id)).then(function (res) {
-                data = res;
-                $("#detailId").val(id);
-                $("#productName").val(data.ProductName);
-                $("#price").val(data.Amount);
-                $("#quantity").val(data.Quantity);
-                $("#orderDetailsModal").modal('show');
+           });
+        //    //$.when(getSingleOrderDetail(id)).then(function (res) {
+        //    //    data = res;
+        //    //    $("#detailId").val(id);
+        //    //    $("#productName").val(data.ProductName);
+        //    //    $("#price").val(data.Amount);
+        //    //    $("#quantity").val(data.Quantity);
+        //    //    $("#orderDetailsModal").modal('show');
 
 
-            }).fail(function (err) {
-                console.log(err);
-            });
+        //    //}).fail(function (err) {
+        //    //    console.log(err);
+        //    //});
         });
             function getOrder(id) {
                 return $.ajax({
@@ -514,12 +569,12 @@
                 });
 
             }
-        $("#saveOrder").click(function (e) {
-            e.preventDefault();
-            $(".error").remove();
-            var Name = $('#customerName').val();
-            var Address = $('#customerAddress').val();
-            function valid() {
+              $("#saveOrder").click(function (e) {
+                e.preventDefault();
+                $(".error").remove();
+                var Name = $('#customerName').val();
+                var Address = $('#customerAddress').val();
+                function valid() {
                 if (Name.length < 1) {
                     $('#customerName').after('<span class="error">Customer Name is required</span>');
                     return false;
@@ -550,29 +605,29 @@
                 }
             }
             if (valid()) {
-                        var orderArr = [];
-                        orderArr.length = 0;
+                        //var orderArr = [];
+                        //orderArr.length = 0;
 
 
-                        $.each($("#detailsTable tbody tr"), function () {
+                        //$.each($("#detailsTable tbody tr"), function () {
 
-                            orderArr.push({
-                                ProductName: $(this).find('td:eq(0)').html(),
-                                Quantity: $(this).find('td:eq(2)').html(),
-                                Amount: $(this).find('td:eq(1)').html(),
-                                State: $(this).find('td:eq(5)').html()
-                            });
+                        //    orderArr.push({
+                        //        ProductName: $(this).find('td:eq(0)').html(),
+                        //        Quantity: $(this).find('td:eq(2)').html(),
+                        //        Amount: $(this).find('td:eq(1)').html(),
+                        //        State: $(this).find('td:eq(5)').html()
+                        //    });
 
-                        });
+                        //});
 
+                refreshItemlist();
 
-
-                if (orderArr.length > 0) {
+                if ( itemList.length > 0) {
                     var data = JSON.stringify({
                         MasterId: $("#orderMasterId").val(),
                         CustomerName: $("#customerName").val(),
                         Address: $("#customerAddress").val(),
-                        OrderDetails: orderArr
+                        OrderDetails: itemList
                     });
 
                     $.when(saveOrder(data)).then(function (response) {
@@ -603,8 +658,33 @@
 
 
         })
-        var itemArr = [];
-       
+        var itemList = [];
+
+
+
+
+
+        function getFromItemList(index) {
+            return itemList[index];
+        }
+
+        function refreshItemlist() {
+            $("#detailsTable tbody").empty();
+            if (itemList.length > 0) {
+               
+                for (i = 0; i < itemList.length; i++) {
+                    var itemRow = '<tr><td>' + itemList[i].ProductName + '</td><td>' + itemList[i].Amount + '</td><td>' + itemList[i].Quantity + '</td><td>' + (parseFloat(itemList[i].Amount) * parseInt(itemList[i].Quantity)) + '</td><td> <a href="#" data-index="' + itemList[i].index + '"  class="editDetail">Edit</a></td><td> <a data-itemId="' + itemList[i].DetailsId + '" data-index="' + i + '" data-state="'+itemList[i].state+'" href="#"  class="deleteItem">Delete</a></td></tr>';
+
+                    $("#detailsTable tbody").append(itemRow);
+
+
+                }
+            } 
+              
+           
+                
+                
+              }
 
 
 
@@ -613,12 +693,10 @@
 
 
 
-
-
+         
     </script>
 
+    }
 
 
 
-
-}
