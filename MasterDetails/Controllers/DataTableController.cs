@@ -13,47 +13,94 @@ namespace MasterDetails.Controllers
     public class DataTableController : Controller
     {
         public MasterDataEntities db;
+        public DataTable CustomerTable;
+        public DataTable DetailsTable;
+
         public DataTableController()
         {
+            
             db = new MasterDataEntities();
+            CustomerTable = GetCustomerTable();
+            DetailsTable = GetDetailsTable();
+
+        }
+
+        public DataTable GetDetailsTable()
+        {
+            DataTable DetailsTable = new DataTable();
+            DetailsTable.Columns.Add("MasterId");
+            DetailsTable.Columns.Add("DetailsId");
+            DetailsTable.Columns.Add("ProductName");
+            DetailsTable.Columns.Add("Quantity");
+            DetailsTable.Columns.Add("Amount");
+
+            var details = db.OrderDetails.ToList();
+            foreach(var item in details)
+            {
+                DetailsTable.Rows.Add(item.MasterId,item.DetailsId, item.ProductName, item.Quantity, item.Amount);
+            }
+            return DetailsTable;
+
+        }
+        public DataTable GetCustomerTable()
+        {
+
+            DataTable CustomerTable = new DataTable();
+            CustomerTable.Columns.Add("MasterId");
+            CustomerTable.Columns.Add("CustomerName");
+            CustomerTable.Columns.Add("Adddress");
+            CustomerTable.Columns.Add("OrderDate");
+
+            var master = db.OrderMasters.ToList();
+            foreach (var customer in master)
+            {
+                CustomerTable.Rows.Add(customer.MasterId, customer.CustomerName, customer.Address, customer.OrderDate);
+            }
+
+
+            return CustomerTable;
         }
 
         // GET: DataTable
         public ActionResult Index()
         {
-            SqlConnection Con = new SqlConnection();
-            string path = ConfigurationManager.ConnectionStrings["dbPath"].ConnectionString;
-            Con.ConnectionString =  path;
-            DataTable dt = new DataTable();
-            try
-            {
-                SqlDataAdapter adp = new SqlDataAdapter("SELECT * FROM[dbo].[OrderMaster]", Con);
-                adp.Fill(dt);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-             return View(dt.Rows);
+
+  
+                return View(CustomerTable);
            
         }
-        public ActionResult NewOrder(Guid MasterId)
+        public ActionResult GetOrderList(Guid id)
         {
-            var id = MasterId.ToString().ToUpper();
-            SqlConnection Con = new SqlConnection();
-            string path = ConfigurationManager.ConnectionStrings["dbPath"].ConnectionString;
-            Con.ConnectionString = path;
-            DataTable dt = new DataTable();
-            try
+            var items = DetailsTable.Select($"MasterId = '{id}'").ToList();
+
+            
+            return PartialView("_Order",items);
+
+        }
+
+
+        [HttpPost]
+        public ActionResult updateDetails(OrderDetailViewModel item)
+        {
+            if (item != null)
             {
-                string Command = $"SELECT * FROM [dbo].[OrderDetails] WHERE MasterId ='{id}'";
-                SqlDataAdapter adp = new SqlDataAdapter( Command, Con);
-                adp.Fill(dt);
+
+
+                DetailsTable.Rows.Add(item.MasterId, item.DetailsId, item.ProductName, item.Quantity, item.Amount);
+                return null;
             }
-            catch (Exception)
+            else
             {
-                throw;
+                return null;
             }
-            return PartialView("_NewOrder",dt);        }
+
+        }
+
+        public ActionResult NewOrder()
+        {
+           
+            return PartialView("_NewOrder");
+        }
     }
+    
 }
